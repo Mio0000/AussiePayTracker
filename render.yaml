@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: aussie-pay-tracker
+    runtime: python
+    plan: free
+    buildCommand: apt-get install -y tesseract-ocr tesseract-ocr-eng && pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"

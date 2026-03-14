@@ -2,8 +2,6 @@
 AussiePayTracker - Web UI
 """
 
-import threading
-import webbrowser
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify
 from parse_payslip import extract_text_from_pdf, parse_payslip
@@ -85,14 +83,6 @@ def analyze():
     })
 
 
-def open_browser():
-    url = 'http://localhost:8080'
-    try:
-        webbrowser.get('chrome').open(url)
-    except webbrowser.Error:
-        webbrowser.open(url)  # デフォルトブラウザにフォールバック
-
-
 if __name__ == '__main__':
-    threading.Timer(0.8, open_browser).start()
-    app.run(debug=False, port=8080)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', debug=False, port=port)
