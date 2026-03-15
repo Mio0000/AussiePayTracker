@@ -292,6 +292,8 @@ def parse_payslip(text: str) -> PayslipData:
             v = first_amount(ytd_block, [r'\bTax\b'])
             if v is not None:
                 data.tax_ytd = abs(v)
+        if data.super_ytd is None:
+            data.super_ytd = first_amount(ytd_block, [r'\bSuper(?:annuation)?\b', r'\bER Super\b'])
 
     # ── Leave balances ────────────────────────────────────────────────
     m = re.search(r'Annual Leave\s+([\d.]+)', text, re.IGNORECASE)

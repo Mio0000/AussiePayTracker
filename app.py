@@ -18,9 +18,41 @@ ALLOWED_EXTENSIONS = {'.pdf', '.png', '.jpg', '.jpeg', '.webp', '.tiff', '.tif',
 
 def extract_text_from_image(path: str) -> str:
     img = Image.open(path)
-    # グレースケール変換でOCR精度向上
     img = img.convert('L')
     return pytesseract.image_to_string(img, lang='eng')
+
+
+def payslip_to_dict(data, filename: str = '') -> dict:
+    return {
+        'filename':           filename,
+        'employer':           data.employer,
+        'employee_name':      data.employee_name,
+        'employee_id':        data.employee_id,
+        'base_rate':          data.base_rate,
+        'pay_period_start':   data.pay_period_start,
+        'pay_period_end':     data.pay_period_end,
+        'pay_date':           data.pay_date,
+        'shifts': [
+            {
+                'date':   s.date,
+                'label':  s.label,
+                'hours':  s.hours,
+                'rate':   s.rate,
+                'amount': s.amount,
+                'type':   s.type,
+            }
+            for s in data.shifts
+        ],
+        'gross_pay':          data.gross_pay,
+        'gross_pay_ytd':      data.gross_pay_ytd,
+        'tax_withheld':       data.tax_withheld,
+        'tax_ytd':            data.tax_ytd,
+        'superannuation':     data.superannuation,
+        'super_ytd':          data.super_ytd,
+        'net_pay':            data.net_pay,
+        'net_pay_ytd':        data.net_pay_ytd,
+        'annual_leave_hours': data.annual_leave_hours,
+    }
 
 
 @app.route('/')
@@ -30,57 +62,38 @@ def index():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    if 'file' not in request.files:
+    files = request.files.getlist('file')
+    if not files or all(f.filename == '' for f in files):
         return jsonify({'error': 'No file selected'}), 400
 
-    file = request.files['file']
-    suffix = Path(file.filename).suffix.lower()
+    results = []
+    for file in files:
+        if not file.filename:
+            continue
+        suffix = Path(file.filename).suffix.lower()
+        if suffix not in ALLOWED_EXTENSIONS:
+            return jsonify({'error': f'Unsupported file type: {suffix}'}), 400
 
-    if suffix not in ALLOWED_EXTENSIONS:
-        return jsonify({'error': f'Unsupported file type: {suffix}'}), 400
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            file.save(tmp.name)
+            try:
+                if suffix == '.pdf':
+                    text = extract_text_from_pdf(tmp.name)
+                else:
+                    text = extract_text_from_image(tmp.name)
+                data = parse_payslip(text)
+            finally:
+                os.unlink(tmp.name)
 
-    # 一時ファイルに保存して解析
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        file.save(tmp.name)
-        try:
-            if suffix == '.pdf':
-                text = extract_text_from_pdf(tmp.name)
-            else:
-                text = extract_text_from_image(tmp.name)
-            data = parse_payslip(text)
-        finally:
-            os.unlink(tmp.name)
+        results.append(payslip_to_dict(data, file.filename))
 
-    shifts = [
-        {
-            'date':   s.date,
-            'label':  s.label,
-            'hours':  s.hours,
-            'rate':   s.rate,
-            'amount': s.amount,
-            'type':   s.type,
-        }
-        for s in data.shifts
-    ]
+    return jsonify({'results': results})
 
-    return jsonify({
-        'employer':          data.employer,
-        'employee_name':     data.employee_name,
-        'employee_id':       data.employee_id,
-        'pay_period_start':  data.pay_period_start,
-        'pay_period_end':    data.pay_period_end,
-        'pay_date':          data.pay_date,
-        'shifts':            shifts,
-        'gross_pay':         data.gross_pay,
-        'gross_pay_ytd':     data.gross_pay_ytd,
-        'tax_withheld':      data.tax_withheld,
-        'tax_ytd':           data.tax_ytd,
-        'superannuation':    data.superannuation,
-        'super_ytd':         data.super_ytd,
-        'net_pay':           data.net_pay,
-        'net_pay_ytd':       data.net_pay_ytd,
-        'annual_leave_hours': data.annual_leave_hours,
-    })
+
+@app.route('/health')
+def health():
+    """Keep-alive endpoint for Render free tier (ping every ~14 min to prevent sleep)."""
+    return jsonify({'status': 'ok'})
 
 
 if __name__ == '__main__':

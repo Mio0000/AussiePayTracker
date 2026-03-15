@@ -5,217 +5,485 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AussiePayTracker</title>
   <style>
+    /* ── CSS custom properties (light / dark) ─────────────────── */
+    :root {
+      --bg:          #f0f4f8;
+      --surface:     #ffffff;
+      --surface2:    #f7fafc;
+      --border:      #e2e8f0;
+      --text:        #1a202c;
+      --text2:       #4a5568;
+      --text3:       #718096;
+      --accent:      #2b6cb0;
+      --accent-bg:   #ebf8ff;
+      --accent-bdr:  #90cdf4;
+      --header-bg:   #1a365d;
+      --gross-c:     #276749;
+      --tax-c:       #c53030;
+      --super-c:     #2b6cb0;
+      --net-bg:      #ebf8ff;
+      --net-bdr:     #90cdf4;
+      --net-c:       #1a365d;
+      --penalty-bg:  #fffaf0;
+      --penalty-c:   #c05621;
+      --dim-c:       #718096;
+      --green-bg:    #f0fff4;
+      --green-bdr:   #9ae6b4;
+      --green-c:     #276749;
+      --shadow:      0 2px 12px rgba(0,0,0,0.08);
+      --drop-bg:     #ebf8ff;
+      --drop-bdr:    #90cdf4;
+      --drop-hover:  #bee3f8;
+    }
+
+    [data-theme="dark"] {
+      --bg:          #171923;
+      --surface:     #1e2532;
+      --surface2:    #252d3d;
+      --border:      #2d3748;
+      --text:        #e2e8f0;
+      --text2:       #a0aec0;
+      --text3:       #718096;
+      --accent:      #63b3ed;
+      --accent-bg:   #1a2a4a;
+      --accent-bdr:  #2b4a7a;
+      --header-bg:   #0d1b2e;
+      --gross-c:     #68d391;
+      --tax-c:       #fc8181;
+      --super-c:     #63b3ed;
+      --net-bg:      #1a2a4a;
+      --net-bdr:     #2b4a7a;
+      --net-c:       #90cdf4;
+      --penalty-bg:  #2d2013;
+      --penalty-c:   #fbd38d;
+      --dim-c:       #4a5568;
+      --green-bg:    #1a2d1e;
+      --green-bdr:   #2d6a4f;
+      --green-c:     #68d391;
+      --shadow:      0 2px 12px rgba(0,0,0,0.35);
+      --drop-bg:     #1a2a4a;
+      --drop-bdr:    #2b4a7a;
+      --drop-hover:  #1e3050;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      color: #1a202c;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
     }
 
+    /* ── Header ───────────────────────────────────────────────── */
     header {
-      background: #1a365d;
+      background: var(--header-bg);
       color: white;
-      padding: 18px 32px;
+      padding: 16px 28px;
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    header .flag { font-size: 1.6rem; }
-    header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.02em; }
-    header p  { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
+    header .flag  { font-size: 1.6rem; }
+    header .title { flex: 1; }
+    header h1     { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
+    header p      { font-size: 0.78rem; opacity: 0.65; margin-top: 2px; }
 
-    main { max-width: 860px; margin: 40px auto; padding: 0 20px 60px; }
+    .btn-theme {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-theme:hover { background: rgba(255,255,255,0.22); }
 
-    /* ── Upload card ─────────────────────────────────────────── */
+    main { max-width: 880px; margin: 36px auto; padding: 0 18px 60px; }
+
+    /* ── Upload card ──────────────────────────────────────────── */
     .upload-card {
-      background: white;
+      background: var(--surface);
       border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      padding: 40px;
+      box-shadow: var(--shadow);
+      padding: 36px;
       text-align: center;
     }
 
     .drop-zone {
-      border: 2px dashed #90cdf4;
+      border: 2px dashed var(--drop-bdr);
       border-radius: 10px;
-      padding: 48px 24px;
+      padding: 42px 20px;
       cursor: pointer;
       transition: background 0.2s, border-color 0.2s;
-      background: #ebf8ff;
+      background: var(--drop-bg);
     }
     .drop-zone:hover, .drop-zone.dragover {
-      background: #bee3f8;
-      border-color: #3182ce;
+      background: var(--drop-hover);
+      border-color: var(--accent);
     }
-    .drop-zone .icon { font-size: 3rem; margin-bottom: 12px; }
-    .drop-zone p { color: #4a5568; font-size: 0.95rem; }
-    .drop-zone p span { color: #3182ce; font-weight: 600; }
-    .drop-zone .hint { font-size: 0.8rem; color: #a0aec0; margin-top: 6px; }
+    .drop-zone .icon { font-size: 2.8rem; margin-bottom: 10px; }
+    .drop-zone p     { color: var(--text2); font-size: 0.95rem; }
+    .drop-zone span  { color: var(--accent); font-weight: 600; }
+    .drop-zone .hint { font-size: 0.78rem; color: var(--text3); margin-top: 6px; }
 
     #fileInput { display: none; }
 
-    .selected-name {
-      margin-top: 14px;
-      font-size: 0.9rem;
-      color: #2d3748;
-      font-weight: 500;
+    .file-list {
+      list-style: none;
+      margin-top: 12px;
+      text-align: left;
+      display: none;
     }
+    .file-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      font-size: 0.86rem;
+      color: var(--text2);
+      background: var(--surface2);
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+    .file-list li .rm {
+      margin-left: auto;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 2px 4px;
+    }
+    .file-list li .rm:hover { color: var(--tax-c); }
 
     .btn-analyze {
-      margin-top: 20px;
-      background: #2b6cb0;
+      margin-top: 18px;
+      background: var(--accent);
       color: white;
       border: none;
-      padding: 12px 36px;
+      padding: 11px 34px;
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 0.98rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: opacity 0.2s, transform 0.1s;
       display: none;
     }
-    .btn-analyze:hover  { background: #2c5282; }
-    .btn-analyze:active { transform: scale(0.98); }
-    .btn-analyze:disabled { background: #a0aec0; cursor: not-allowed; }
+    .btn-analyze:hover   { opacity: 0.86; }
+    .btn-analyze:active  { transform: scale(0.98); }
+    .btn-analyze:disabled { background: var(--text3); cursor: not-allowed; }
 
-    /* ── Loading ─────────────────────────────────────────────── */
+    /* ── Loading / Error ──────────────────────────────────────── */
     .loading {
       display: none;
-      margin-top: 20px;
-      color: #4a5568;
-      font-size: 0.95rem;
+      margin-top: 18px;
+      color: var(--text2);
+      font-size: 0.92rem;
     }
     .spinner {
       display: inline-block;
-      width: 20px; height: 20px;
-      border: 3px solid #bee3f8;
-      border-top-color: #3182ce;
+      width: 18px; height: 18px;
+      border: 3px solid var(--accent-bdr);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       vertical-align: middle;
-      margin-right: 8px;
+      margin-right: 7px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Error ───────────────────────────────────────────────── */
     .error-box {
       display: none;
       background: #fff5f5;
       border: 1px solid #fc8181;
       border-radius: 8px;
-      padding: 14px 18px;
-      margin-top: 20px;
+      padding: 12px 16px;
+      margin-top: 16px;
       color: #c53030;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+    }
+    [data-theme="dark"] .error-box {
+      background: #2d1515;
+      border-color: #c53030;
+      color: #fc8181;
     }
 
-    /* ── Result ──────────────────────────────────────────────── */
-    #result { display: none; margin-top: 32px; }
-
-    .result-header {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      padding: 24px 28px;
-      margin-bottom: 20px;
-    }
-    .result-header .employer { font-size: 1.1rem; font-weight: 700; color: #1a365d; }
-    .result-header .meta {
-      display: flex; flex-wrap: wrap; gap: 20px;
-      margin-top: 10px;
-    }
-    .meta-item label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; }
-    .meta-item span  { display: block; font-size: 0.95rem; font-weight: 600; color: #2d3748; }
-
-    /* ── Shift table ─────────────────────────────────────────── */
+    /* ── Generic cards ────────────────────────────────────────── */
     .card {
-      background: white;
+      background: var(--surface);
       border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      padding: 24px 28px;
-      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      padding: 22px 26px;
+      margin-bottom: 18px;
     }
-    .card h2 {
-      font-size: 0.85rem;
+    .card h2, .card-h2 {
+      font-size: 0.82rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #718096;
-      margin-bottom: 16px;
+      color: var(--text3);
+      margin-bottom: 14px;
     }
+    .card-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .card-toolbar .card-h2 { margin-bottom: 0; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-    th {
-      text-align: left;
-      padding: 8px 12px;
-      background: #f7fafc;
-      border-bottom: 2px solid #e2e8f0;
-      font-size: 0.78rem;
+    /* ── Result header ────────────────────────────────────────── */
+    .result-header {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 22px 26px;
+      margin-bottom: 18px;
+      position: relative;
+    }
+    .result-header .employer {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--accent);
+      padding-right: 120px;
+    }
+    .result-header .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 10px;
+    }
+    .meta-item label {
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #718096;
+      color: var(--text3);
     }
-    th.num, td.num { text-align: right; }
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #edf2f7;
-      color: #2d3748;
-    }
-    tr:last-child td { border-bottom: none; }
-    tr.penalty td { background: #fffaf0; color: #c05621; }
-    tr.total td {
-      font-weight: 700;
-      background: #f7fafc;
-      border-top: 2px solid #e2e8f0;
+    .meta-item span {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
     }
 
-    /* ── Summary grid ────────────────────────────────────────── */
+    /* ── Small buttons ────────────────────────────────────────── */
+    .btn-sm {
+      font-size: 0.78rem;
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-sm:hover { background: var(--border); }
+
+    .btn-print {
+      position: absolute;
+      top: 22px;
+      right: 26px;
+    }
+
+    /* ── Table ────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 420px; }
+    th {
+      text-align: left;
+      padding: 7px 11px;
+      background: var(--surface2);
+      border-bottom: 2px solid var(--border);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text3);
+    }
+    th.r, td.r { text-align: right; }
+    td {
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td    { border-bottom: none; }
+    tr.penalty td       { background: var(--penalty-bg); color: var(--penalty-c); }
+    tr.dim td           { color: var(--dim-c); font-size: 0.86rem; }
+    tr.total td         { font-weight: 700; background: var(--surface2); border-top: 2px solid var(--border); }
+
+    /* ── Summary grid ─────────────────────────────────────────── */
     .summary-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 12px;
     }
-    @media (max-width: 540px) { .summary-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .summary-grid { grid-template-columns: 1fr; } }
 
     .summary-item {
       border-radius: 10px;
-      padding: 18px 20px;
-      background: #f7fafc;
+      padding: 16px 18px;
+      background: var(--surface2);
     }
     .summary-item label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #718096;
+      color: var(--text3);
     }
-    .summary-item .this-pay {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-    .summary-item .ytd {
-      font-size: 0.78rem;
-      color: #a0aec0;
-      margin-top: 2px;
-    }
-
-    .gross  .this-pay { color: #276749; }
-    .tax    .this-pay { color: #c53030; }
-    .super  .this-pay { color: #2b6cb0; }
-    .net    { background: #ebf8ff; border: 1px solid #90cdf4; }
-    .net    .this-pay { color: #1a365d; font-size: 1.8rem; }
+    .summary-item .this-pay { font-size: 1.45rem; font-weight: 700; margin-top: 4px; }
+    .summary-item .ytd      { font-size: 0.76rem; color: var(--text3); margin-top: 2px; }
+    .gross .this-pay { color: var(--gross-c); }
+    .tax   .this-pay { color: var(--tax-c);   }
+    .super .this-pay { color: var(--super-c); }
+    .net   { background: var(--net-bg); border: 1px solid var(--net-bdr); }
+    .net   .this-pay { color: var(--net-c); font-size: 1.7rem; }
 
     .leave-badge {
       display: inline-block;
-      background: #f0fff4;
-      border: 1px solid #9ae6b4;
-      color: #276749;
-      padding: 6px 14px;
+      background: var(--green-bg);
+      border: 1px solid var(--green-bdr);
+      color: var(--green-c);
+      padding: 5px 13px;
       border-radius: 20px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       margin-top: 4px;
+    }
+
+    /* ── Aggregate banner ─────────────────────────────────────── */
+    .agg-count {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* ── Accordion ────────────────────────────────────────────── */
+    .payslip-details { margin-bottom: 6px; }
+
+    .payslip-details > summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 14px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+      user-select: none;
+      margin-bottom: 2px;
+    }
+    .payslip-details > summary::-webkit-details-marker { display: none; }
+    .payslip-details[open] > summary { border-radius: 10px 10px 0 0; }
+
+    .payslip-details > summary .pnum {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 9px;
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+    .payslip-details > summary .meta-preview {
+      font-weight: 400;
+      font-size: 0.82rem;
+      color: var(--text3);
+    }
+    .payslip-details > summary .chevron {
+      margin-left: auto;
+      color: var(--text3);
+      font-size: 0.85rem;
+      transition: transform 0.2s;
+    }
+    .payslip-details[open] > summary .chevron { transform: rotate(90deg); }
+
+    .detail-body {
+      background: var(--surface2);
+      border-radius: 0 0 10px 10px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 2px;
+    }
+
+    /* ── Income simulator ─────────────────────────────────────── */
+    .sim-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 540px) { .sim-inputs { grid-template-columns: 1fr; } }
+
+    .sim-field label {
+      display: block;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text3);
+      margin-bottom: 5px;
+    }
+    .sim-field input[type=number] {
+      width: 100%;
+      padding: 8px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.96rem;
+    }
+    .sim-field input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      margin-top: 6px;
+    }
+
+    .sim-output {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 580px) { .sim-output { grid-template-columns: 1fr 1fr; } }
+
+    .sim-val {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 13px 15px;
+    }
+    .sim-val label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text3);
+      display: block;
+    }
+    .sim-val .val { font-size: 1.18rem; font-weight: 700; margin-top: 3px; }
+
+    .sim-note { font-size: 0.72rem; color: var(--text3); margin-top: 12px; line-height: 1.4; }
+
+    /* ── Print ────────────────────────────────────────────────── */
+    @media print {
+      header .btn-theme,
+      .upload-card,
+      #simulator,
+      .btn-print,
+      .btn-sm.csv-btn { display: none !important; }
+
+      body { background: white; color: black; }
+      .card, .result-header, .detail-body { box-shadow: none; border: 1px solid #ddd; }
+      .payslip-details { break-inside: avoid; }
+      .payslip-details > summary { box-shadow: none; }
     }
   </style>
 </head>
@@ -223,232 +491,438 @@
 
 <header>
   <span class="flag">🇦🇺</span>
-  <div>
+  <div class="title">
     <h1>AussiePayTracker</h1>
     <p>Australian Payslip Analyser</p>
   </div>
+  <button class="btn-theme" id="btnTheme">🌙 Dark</button>
 </header>
 
 <main>
+  <!-- Upload -->
   <div class="upload-card">
     <div class="drop-zone" id="dropZone">
       <div class="icon">📄</div>
-      <p>Drop your payslip here, or <span>click to browse</span></p>
-      <p class="hint">PDF · PNG · JPG · WEBP · TIFF &nbsp;·&nbsp; Silk / Dayforce / MYOB / Xero and more</p>
+      <p>Drop your payslip(s) here, or <span>click to browse</span></p>
+      <p class="hint">PDF · PNG · JPG · WEBP · TIFF &nbsp;·&nbsp; Silk / Dayforce / MYOB / Xero &nbsp;·&nbsp; Multiple files OK</p>
     </div>
-    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.tiff,.tif,.bmp">
-
-    <div class="selected-name" id="selectedName"></div>
+    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.tiff,.tif,.bmp" multiple>
+    <ul class="file-list" id="fileList"></ul>
     <button class="btn-analyze" id="btnAnalyze">Analyse</button>
-    <div class="loading" id="loading"><span class="spinner"></span>Analysing...</div>
+    <div class="loading"   id="loading"><span class="spinner"></span>Analysing…</div>
     <div class="error-box" id="errorBox"></div>
   </div>
 
-  <div id="result">
-    <div class="result-header">
-      <div class="employer" id="rEmployer"></div>
-      <div class="meta">
-        <div class="meta-item">
-          <label>Employee</label>
-          <span id="rEmployee"></span>
+  <!-- Aggregate summary (multiple payslips) -->
+  <div id="aggSection"></div>
+
+  <!-- Per-payslip results -->
+  <div id="resultsContainer"></div>
+
+  <!-- Income simulator -->
+  <div id="simulator" style="display:none">
+    <div class="card">
+      <h2>Annual Income Simulator</h2>
+      <div class="sim-inputs">
+        <div class="sim-field">
+          <label>Hourly Rate ($/hr)</label>
+          <input type="number" id="simRate" min="0" step="0.01" placeholder="e.g. 25.85" oninput="updateSim()">
         </div>
-        <div class="meta-item">
-          <label>Pay Period</label>
-          <span id="rPeriod"></span>
+        <div class="sim-field">
+          <label>Hours / Week: <span id="simHrsLbl">38</span></label>
+          <input type="range" id="simHrs" min="1" max="60" value="38"
+                 oninput="document.getElementById('simHrsLbl').textContent=this.value; updateSim()">
         </div>
-        <div class="meta-item">
-          <label>Pay Date</label>
-          <span id="rPayDate"></span>
+        <div class="sim-field">
+          <label>Weeks / Year</label>
+          <input type="number" id="simWeeks" min="1" max="52" value="52" oninput="updateSim()">
         </div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Shift Breakdown</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th class="num">Hours</th>
-            <th class="num">Rate</th>
-            <th class="num">Amount</th>
-          </tr>
-        </thead>
-        <tbody id="shiftBody"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>Pay Summary</h2>
-      <div class="summary-grid">
-        <div class="summary-item gross">
-          <label>Gross Pay</label>
-          <div class="this-pay" id="sGross"></div>
-          <div class="ytd" id="sGrossYtd"></div>
-        </div>
-        <div class="summary-item tax">
-          <label>Tax Withheld</label>
-          <div class="this-pay" id="sTax"></div>
-          <div class="ytd" id="sTaxYtd"></div>
-        </div>
-        <div class="summary-item super">
-          <label>Superannuation</label>
-          <div class="this-pay" id="sSuper"></div>
-          <div class="ytd" id="sSuperYtd"></div>
-        </div>
-        <div class="summary-item net">
-          <label>Net Pay</label>
-          <div class="this-pay" id="sNet"></div>
-          <div class="ytd" id="sNetYtd"></div>
-        </div>
-      </div>
-      <div style="margin-top:16px" id="leaveRow"></div>
+      <div class="sim-output" id="simOut"></div>
+      <p class="sim-note">
+        * Estimate only — ATO 2025–26 individual rates + LITO + 2% Medicare levy.
+        Does not include HECS/HELP, salary packaging, or other offsets. Super rate 11.5%.
+      </p>
     </div>
   </div>
 </main>
 
 <script>
+  // ── Payslip data store ─────────────────────────────────────────
+  const store = {};
+
+  // ── Theme ──────────────────────────────────────────────────────
+  (function () {
+    const t = localStorage.getItem('theme') || 'light';
+    if (t === 'dark') setTheme('dark');
+  })();
+
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('btnTheme').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    const cur  = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('theme', next);
+  });
+
+  // ── File selection ─────────────────────────────────────────────
+  const ALLOWED = ['.pdf','.png','.jpg','.jpeg','.webp','.tiff','.tif','.bmp'];
+  let selectedFiles = [];
+
   const dropZone   = document.getElementById('dropZone');
   const fileInput  = document.getElementById('fileInput');
+  const fileListEl = document.getElementById('fileList');
   const btnAnalyze = document.getElementById('btnAnalyze');
-  const loading    = document.getElementById('loading');
-  const errorBox   = document.getElementById('errorBox');
-  const result     = document.getElementById('result');
-  const selName    = document.getElementById('selectedName');
 
-  let selectedFile = null;
-
-  // クリックで選択
   dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => addFiles(Array.from(fileInput.files)));
 
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) setFile(fileInput.files[0]);
-  });
-
-  // ドラッグ&ドロップ
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault(); dropZone.classList.add('dragover');
-  });
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
-    const f = e.dataTransfer.files[0];
-    if (f) setFile(f);
+    addFiles(Array.from(e.dataTransfer.files));
   });
 
-  const ALLOWED = ['.pdf','.png','.jpg','.jpeg','.webp','.tiff','.tif','.bmp'];
-
-  function setFile(f) {
-    const ext = '.' + f.name.split('.').pop().toLowerCase();
-    if (!ALLOWED.includes(ext)) {
-      errorBox.textContent = '⚠ Unsupported file type: ' + ext;
-      errorBox.style.display = 'block';
-      return;
+  function addFiles(files) {
+    const errBox = document.getElementById('errorBox');
+    for (const f of files) {
+      const ext = '.' + f.name.split('.').pop().toLowerCase();
+      if (!ALLOWED.includes(ext)) {
+        errBox.textContent = '⚠ Unsupported file type: ' + ext;
+        errBox.style.display = 'block';
+        return;
+      }
+      if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f);
     }
-    selectedFile = f;
-    selName.textContent = '📎 ' + f.name;
-    btnAnalyze.style.display = 'inline-block';
-    result.style.display = 'none';
-    errorBox.style.display = 'none';
+    errBox.style.display = 'none';
+    renderFileList();
   }
 
-  btnAnalyze.addEventListener('click', async () => {
-    if (!selectedFile) return;
+  function removeFile(name) {
+    selectedFiles = selectedFiles.filter(f => f.name !== name);
+    renderFileList();
+  }
 
+  function renderFileList() {
+    fileListEl.innerHTML = '';
+    if (!selectedFiles.length) {
+      fileListEl.style.display = 'none';
+      btnAnalyze.style.display = 'none';
+      return;
+    }
+    fileListEl.style.display = 'block';
+    btnAnalyze.style.display = 'inline-block';
+    for (const f of selectedFiles) {
+      const li  = document.createElement('li');
+      const esc = f.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      li.innerHTML = `<span>📎</span><span>${f.name}</span>
+        <span class="rm" onclick="removeFile('${esc}')">✕</span>`;
+      fileListEl.appendChild(li);
+    }
+  }
+
+  // ── Analyse ────────────────────────────────────────────────────
+  btnAnalyze.addEventListener('click', async () => {
+    if (!selectedFiles.length) return;
+    const loading = document.getElementById('loading');
+    const errBox  = document.getElementById('errorBox');
     btnAnalyze.disabled = true;
     loading.style.display = 'block';
-    errorBox.style.display = 'none';
-    result.style.display = 'none';
+    errBox.style.display  = 'none';
 
     const fd = new FormData();
-    fd.append('file', selectedFile);
+    for (const f of selectedFiles) fd.append('file', f);
 
     try {
       const res  = await fetch('/analyze', { method: 'POST', body: fd });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || 'Analysis failed');
-      renderResult(data);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Analysis failed');
+      renderAll(json.results);
     } catch (e) {
-      errorBox.textContent = '⚠ ' + e.message;
-      errorBox.style.display = 'block';
+      errBox.textContent   = '⚠ ' + e.message;
+      errBox.style.display = 'block';
     } finally {
-      btnAnalyze.disabled = false;
+      btnAnalyze.disabled   = false;
       loading.style.display = 'none';
     }
   });
 
-  // ロケール非依存の金額フォーマット
+  // ── Render all results ─────────────────────────────────────────
+  function renderAll(results) {
+    const aggSec    = document.getElementById('aggSection');
+    const container = document.getElementById('resultsContainer');
+    aggSec.innerHTML    = '';
+    container.innerHTML = '';
+    Object.keys(store).forEach(k => delete store[k]);
+
+    results.forEach((r, i) => { store[i + 1] = r; });
+
+    // Aggregate summary when multiple
+    if (results.length > 1) {
+      let gross = 0, tax = 0, sup = 0, net = 0;
+      results.forEach(r => {
+        gross += r.gross_pay      || 0;
+        tax   += r.tax_withheld   || 0;
+        sup   += r.superannuation || 0;
+        net   += r.net_pay        || 0;
+      });
+      aggSec.innerHTML = `
+        <div class="card">
+          <h2>${results.length} payslips analysed <span class="agg-count">${results.length} files</span></h2>
+          <div class="summary-grid">
+            <div class="summary-item gross"><label>Total Gross</label>
+              <div class="this-pay">${fmt(gross)}</div></div>
+            <div class="summary-item tax"><label>Total Tax</label>
+              <div class="this-pay">${fmt(tax, true)}</div></div>
+            <div class="summary-item super"><label>Total Super</label>
+              <div class="this-pay">${fmt(sup)}</div></div>
+            <div class="summary-item net"><label>Total Net</label>
+              <div class="this-pay">${fmt(net)}</div></div>
+          </div>
+        </div>`;
+    }
+
+    if (results.length === 1) {
+      container.innerHTML = buildPayslipHTML(results[0], 1, false);
+    } else {
+      results.forEach((r, i) => {
+        const idx     = i + 1;
+        const details = document.createElement('details');
+        details.className = 'payslip-details';
+        if (i === 0) details.open = true;
+
+        const summary = document.createElement('summary');
+        summary.innerHTML = `
+          <span class="pnum">#${idx}</span>
+          <span>${esc(r.employer || r.filename || 'Payslip ' + idx)}</span>
+          <span class="meta-preview">${r.pay_period_start || ''} – ${r.pay_period_end || ''}</span>
+          <span class="chevron">▶</span>`;
+        details.appendChild(summary);
+
+        const body = document.createElement('div');
+        body.className = 'detail-body';
+        body.innerHTML = buildPayslipHTML(r, idx, true);
+        details.appendChild(body);
+
+        container.appendChild(details);
+      });
+    }
+
+    // Simulator: seed with first payslip's base rate
+    const sim = document.getElementById('simulator');
+    sim.style.display = 'block';
+    const rate = results[0]?.base_rate;
+    if (rate) document.getElementById('simRate').value = rate.toFixed(2);
+    updateSim();
+
+    container.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── Build payslip HTML ─────────────────────────────────────────
+  function buildPayslipHTML(d, idx, inAccordion) {
+    const printBtn = `<button class="btn-sm btn-print" onclick="printPage()">🖨 Print / PDF</button>`;
+
+    const header = `
+      <div class="result-header">
+        ${printBtn}
+        <div class="employer">${esc(d.employer || '—')}</div>
+        <div class="meta">
+          <div class="meta-item">
+            <label>Employee</label>
+            <span>${esc(d.employee_name || '—')}${d.employee_id ? ' (' + esc(d.employee_id) + ')' : ''}</span>
+          </div>
+          <div class="meta-item">
+            <label>Pay Period</label>
+            <span>${d.pay_period_start || '—'} – ${d.pay_period_end || '—'}</span>
+          </div>
+          <div class="meta-item">
+            <label>Pay Date</label>
+            <span>${d.pay_date || '—'}</span>
+          </div>
+        </div>
+      </div>`;
+
+    // Shift table
+    const shifts = d.shifts || [];
+    let shiftRows = '';
+    let totalHours = 0, totalAmt = 0, hasHours = false;
+
+    for (const s of shifts) {
+      const cls    = s.type === 'penalty' ? ' class="penalty"' : (s.type === 'allowance' ? ' class="dim"' : '');
+      const fHours = s.hours != null ? Number(s.hours).toFixed(2) + ' h' : '—';
+      const fRate  = s.rate  != null ? '$' + Number(s.rate).toFixed(4) : '—';
+      shiftRows += `<tr${cls}>
+        <td>${s.date ?? '—'}</td>
+        <td>${esc(s.label)}</td>
+        <td class="r">${fHours}</td>
+        <td class="r">${fRate}</td>
+        <td class="r">$${Number(s.amount).toFixed(2)}</td>
+      </tr>`;
+      if (s.hours != null) { totalHours += Number(s.hours); hasHours = true; }
+      totalAmt += Number(s.amount);
+    }
+    shiftRows += `<tr class="total">
+      <td colspan="2">Total</td>
+      <td class="r">${hasHours ? totalHours.toFixed(2) + ' h' : '—'}</td>
+      <td></td>
+      <td class="r">$${totalAmt.toFixed(2)}</td>
+    </tr>`;
+
+    const fname = (d.employer || 'payslip').replace(/[^a-z0-9]/gi, '_')
+                + '_' + (d.pay_period_end || '').replace(/\//g, '') + '.csv';
+
+    const shiftCard = shifts.length > 0 ? `
+      <div class="card">
+        <div class="card-toolbar">
+          <span class="card-h2">Earnings Breakdown</span>
+          <button class="btn-sm csv-btn" onclick="exportPayslipCSV(${idx}, '${fname}')">⬇ Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Date</th><th>Description</th>
+              <th class="r">Hours</th><th class="r">Rate</th><th class="r">Amount</th>
+            </tr></thead>
+            <tbody>${shiftRows}</tbody>
+          </table>
+        </div>
+      </div>` : '';
+
+    // Pay summary
+    const summaryCard = `
+      <div class="card">
+        <div class="card-h2">Pay Summary</div>
+        <div class="summary-grid">
+          <div class="summary-item gross">
+            <label>Gross Pay</label>
+            <div class="this-pay">${fmt(d.gross_pay)}</div>
+            <div class="ytd">${d.gross_pay_ytd != null ? 'YTD ' + fmt(d.gross_pay_ytd) : ''}</div>
+          </div>
+          <div class="summary-item tax">
+            <label>Tax Withheld</label>
+            <div class="this-pay">${fmt(d.tax_withheld, true)}</div>
+            <div class="ytd">${d.tax_ytd != null ? 'YTD -' + fmt(d.tax_ytd) : ''}</div>
+          </div>
+          <div class="summary-item super">
+            <label>Superannuation</label>
+            <div class="this-pay">${fmt(d.superannuation)}</div>
+            <div class="ytd">${d.super_ytd != null ? 'YTD ' + fmt(d.super_ytd) : ''}</div>
+          </div>
+          <div class="summary-item net">
+            <label>Net Pay</label>
+            <div class="this-pay">${fmt(d.net_pay)}</div>
+            <div class="ytd">${d.net_pay_ytd != null ? 'YTD ' + fmt(d.net_pay_ytd) : ''}</div>
+          </div>
+        </div>
+        ${d.annual_leave_hours != null ? `
+          <div style="margin-top:14px">
+            <span style="font-size:.82rem;color:var(--text3)">Annual Leave Balance&nbsp;</span>
+            <span class="leave-badge">🌴 ${Number(d.annual_leave_hours).toFixed(2)} h</span>
+          </div>` : ''}
+      </div>`;
+
+    return header + shiftCard + summaryCard;
+  }
+
+  // ── CSV export ─────────────────────────────────────────────────
+  function exportPayslipCSV(idx, filename) {
+    const d = store[idx];
+    if (!d) return;
+    const shifts = d.shifts || [];
+    const rows = [['Date','Description','Hours','Rate','Amount','Type']];
+    for (const s of shifts) {
+      rows.push([
+        s.date  ?? '',
+        s.label,
+        s.hours != null ? s.hours : '',
+        s.rate  != null ? s.rate  : '',
+        s.amount,
+        s.type,
+      ]);
+    }
+    const csv  = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Print ──────────────────────────────────────────────────────
+  function printPage() {
+    const details = document.querySelectorAll('details.payslip-details');
+    const prev    = Array.from(details).map(d => d.open);
+    details.forEach(d => d.open = true);
+    window.print();
+    window.addEventListener('afterprint', () => {
+      details.forEach((d, i) => d.open = prev[i]);
+    }, { once: true });
+  }
+
+  // ── Income simulator ───────────────────────────────────────────
+  function calcAUTax(gross) {
+    let tax = 0;
+    if      (gross > 180000) tax = 51667 + 0.45  * (gross - 180000);
+    else if (gross > 120000) tax = 29467 + 0.37  * (gross - 120000);
+    else if (gross > 45000)  tax = 5092  + 0.325 * (gross - 45000);
+    else if (gross > 18200)  tax = 0.19  * (gross - 18200);
+
+    // Low Income Tax Offset
+    let lito = 0;
+    if      (gross <= 37500) lito = 700;
+    else if (gross <= 45000) lito = 700  - 0.05  * (gross - 37500);
+    else if (gross <= 66667) lito = 325  - 0.015 * (gross - 45000);
+    tax = Math.max(0, tax - lito);
+
+    const medicare = gross >= 26000 ? gross * 0.02 : 0;
+    return tax + medicare;
+  }
+
+  function updateSim() {
+    const rate  = parseFloat(document.getElementById('simRate').value)  || 0;
+    const hrs   = parseFloat(document.getElementById('simHrs').value)   || 38;
+    const weeks = parseFloat(document.getElementById('simWeeks').value) || 52;
+    document.getElementById('simHrsLbl').textContent = hrs;
+
+    const out = document.getElementById('simOut');
+    if (rate === 0) { out.innerHTML = ''; return; }
+
+    const gross = rate * hrs * weeks;
+    const tax   = calcAUTax(gross);
+    const sup   = gross * 0.115;
+    const net   = gross - tax;
+
+    out.innerHTML = `
+      <div class="sim-val"><label>Annual Gross</label>
+        <div class="val" style="color:var(--gross-c)">${fmt(gross)}</div></div>
+      <div class="sim-val"><label>Tax + Medicare (est.)</label>
+        <div class="val" style="color:var(--tax-c)">${fmt(tax, true)}</div></div>
+      <div class="sim-val"><label>Super (11.5%)</label>
+        <div class="val" style="color:var(--super-c)">${fmt(sup)}</div></div>
+      <div class="sim-val"><label>Est. Net</label>
+        <div class="val" style="color:var(--net-c)">${fmt(net)}</div></div>`;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────
   function fmt(v, neg = false) {
     if (v == null) return '—';
-    const str = Math.abs(Number(v)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return (neg ? '-$' : '$') + str;
+    const s = Math.abs(Number(v)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-$' : '$') + s;
   }
 
-  function set(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
-
-  function renderResult(d) {
-    // ヘッダー
-    set('rEmployer', d.employer || '—');
-    set('rEmployee', (d.employee_name || '—') + '  (' + (d.employee_id || '—') + ')');
-    set('rPeriod',   (d.pay_period_start || '—') + ' – ' + (d.pay_period_end || '—'));
-    set('rPayDate',  d.pay_date || '—');
-
-    // シフト
-    const tbody = document.getElementById('shiftBody');
-    tbody.innerHTML = '';
-    let totalHours = 0, totalAmount = 0;
-    let hasHours = false;
-    for (const s of d.shifts) {
-      const tr = document.createElement('tr');
-      if (s.type === 'penalty') tr.className = 'penalty';
-      const fmtHours  = s.hours != null ? Number(s.hours).toFixed(2) + ' h' : '—';
-      const fmtRate   = s.rate  != null ? '$' + Number(s.rate).toFixed(4) : '—';
-      tr.innerHTML = `
-        <td>${s.date ?? '—'}</td>
-        <td>${s.label}</td>
-        <td class="num">${fmtHours}</td>
-        <td class="num">${fmtRate}</td>
-        <td class="num">$${Number(s.amount).toFixed(2)}</td>`;
-      tbody.appendChild(tr);
-      if (s.hours != null) { totalHours += Number(s.hours); hasHours = true; }
-      totalAmount += Number(s.amount);
-    }
-    const tfoot = document.createElement('tr');
-    tfoot.className = 'total';
-    tfoot.innerHTML = `
-      <td colspan="2">Total</td>
-      <td class="num">${hasHours ? totalHours.toFixed(2) + ' h' : '—'}</td>
-      <td></td>
-      <td class="num">$${totalAmount.toFixed(2)}</td>`;
-    tbody.appendChild(tfoot);
-
-    // サマリー
-    set('sGross',    fmt(d.gross_pay));
-    set('sGrossYtd', d.gross_pay_ytd != null ? 'YTD ' + fmt(d.gross_pay_ytd) : '');
-    set('sTax',      fmt(d.tax_withheld, true));
-    set('sTaxYtd',   d.tax_ytd != null ? 'YTD -' + fmt(d.tax_ytd) : '');
-    set('sSuper',    fmt(d.superannuation));
-    set('sSuperYtd', d.super_ytd != null ? 'YTD ' + fmt(d.super_ytd) : '');
-    set('sNet',      fmt(d.net_pay));
-    set('sNetYtd',   d.net_pay_ytd != null ? 'YTD ' + fmt(d.net_pay_ytd) : '');
-
-    const leaveRow = document.getElementById('leaveRow');
-    if (d.annual_leave_hours != null) {
-      leaveRow.innerHTML =
-        `<span style="font-size:.85rem;color:#718096">Annual Leave Balance&nbsp;</span>
-         <span class="leave-badge">🌴 ${Number(d.annual_leave_hours).toFixed(2)} h</span>`;
-    } else {
-      leaveRow.innerHTML = '';
-    }
-
-    result.style.display = 'block';
-    result.scrollIntoView({ behavior: 'smooth' });
+  function esc(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 </script>
 </body>
