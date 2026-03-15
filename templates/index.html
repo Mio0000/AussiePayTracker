@@ -403,24 +403,27 @@
     const tbody = document.getElementById('shiftBody');
     tbody.innerHTML = '';
     let totalHours = 0, totalAmount = 0;
+    let hasHours = false;
     for (const s of d.shifts) {
       const tr = document.createElement('tr');
       if (s.type === 'penalty') tr.className = 'penalty';
+      const fmtHours  = s.hours != null ? Number(s.hours).toFixed(2) + ' h' : '—';
+      const fmtRate   = s.rate  != null ? '$' + Number(s.rate).toFixed(4) : '—';
       tr.innerHTML = `
-        <td>${s.date}</td>
+        <td>${s.date ?? '—'}</td>
         <td>${s.label}</td>
-        <td class="num">${Number(s.hours).toFixed(2)} h</td>
-        <td class="num">$${Number(s.rate).toFixed(4)}</td>
+        <td class="num">${fmtHours}</td>
+        <td class="num">${fmtRate}</td>
         <td class="num">$${Number(s.amount).toFixed(2)}</td>`;
       tbody.appendChild(tr);
-      totalHours  += Number(s.hours);
+      if (s.hours != null) { totalHours += Number(s.hours); hasHours = true; }
       totalAmount += Number(s.amount);
     }
     const tfoot = document.createElement('tr');
     tfoot.className = 'total';
     tfoot.innerHTML = `
       <td colspan="2">Total</td>
-      <td class="num">${totalHours.toFixed(2)} h</td>
+      <td class="num">${hasHours ? totalHours.toFixed(2) + ' h' : '—'}</td>
       <td></td>
       <td class="num">$${totalAmount.toFixed(2)}</td>`;
     tbody.appendChild(tfoot);

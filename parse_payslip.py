@@ -154,15 +154,15 @@ SUPER_LABELS = [
 ]
 
 PERIOD_LABELS = [
-    r'Period\s+(\d{1,2}/\d{1,2}/\d{2,4})\s*[-–]\s*(\d{1,2}/\d{1,2}/\d{2,4})',
-    r'Period of Payment\s+(\d{1,2}/\d{1,2}/\d{2,4})\s*[-–]\s*(\d{1,2}/\d{1,2}/\d{2,4})',
+    r'Period[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})\s*[-–]\s*(\d{1,2}/\d{1,2}/\d{2,4})',
+    r'Period of Payment[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})\s*[-–]\s*(\d{1,2}/\d{1,2}/\d{2,4})',
     r'Pay Period[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})\s*[-–]\s*(\d{1,2}/\d{1,2}/\d{2,4})',
     r'Period Ending[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})',
 ]
 
 PAY_DATE_LABELS = [
-    r'Pay Date\s+(\d{1,2}/\d{1,2}/\d{2,4})',
-    r'Paid on Date\s+(\d{1,2}/\d{1,2}/\d{2,4})',
+    r'Pay Date[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})',
+    r'Paid on Date[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})',
     r'(?:Payment Date|Date of Payment|Date Paid)[:\s]+(\d{1,2}/\d{1,2}/\d{2,4})',
 ]
 
@@ -218,6 +218,36 @@ def parse_payslip(text: str) -> PayslipData:
         m = re.search(r'^Name\s+([A-Z].+)', text, re.MULTILINE)
         if m:
             data.employee_name = m.group(1).strip()
+
+    # Generic: "Employee Name: John Smith" / "Employee: John Smith" (colon-separated)
+    if not data.employee_name:
+        m = re.search(
+            r'(?:^|\n)Employee(?:\s+Name)?\s*[:\t]\s*([A-Za-z][^\n\t]+)',
+            text, re.IGNORECASE | re.MULTILINE
+        )
+        if m:
+            val = m.group(1).strip()
+            # Skip if it looks like an ID code (e.g. "FL38505")
+            if not re.match(r'^[A-Z]{1,3}\d+', val):
+                data.employee_name = val
+
+    # Generic: "Employer: Summit Tech Solutions" / "Employer Name: ..."
+    if not data.employer:
+        m = re.search(
+            r'(?:^|\n)Employer(?:\s+Name)?\s*[:\t]\s*([A-Za-z][^\n]+)',
+            text, re.IGNORECASE | re.MULTILINE
+        )
+        if m:
+            data.employer = m.group(1).strip()
+
+    # Last resort: first line that ends with Pty Ltd / Pty. Ltd. / PTY LTD etc.
+    if not data.employer:
+        m = re.search(
+            r'^([A-Z][A-Za-z0-9\s&\-]+(?:Pty\.?\s*Ltd\.?|PTY\s+LTD|Pty\s+Limited))\s*$',
+            text, re.MULTILINE
+        )
+        if m:
+            data.employer = m.group(1).strip()
 
     # ── Base rate ─────────────────────────────────────────────────────
     m = re.search(r'Base Rate\s+\$?([\d,]+\.\d+)', text, re.IGNORECASE)
@@ -305,14 +335,37 @@ DAYFORCE_ALLOW = re.compile(
 # Lines to skip inside Dayforce table
 DAYFORCE_SKIP = re.compile(
     r'^(BEFORE TAX|TAXABLE GROSS|TAX DEDUCT|TOTAL|Sub Total|BENEFIT|'
-    r'NET PAY|Description|AFTER TAX|NOTES|Payroll)',
+    r'NET PAY|Description|AFTER TAX|NOTES|Payroll|YTD|Year.To.Date|'
+    r'Annual Leave|Leave Entitlement|Super|Page\s+\d)',
     re.IGNORECASE
 )
+
+# Generic salaried earnings section header
+EARNINGS_HDR = re.compile(
+    r'^(EARNINGS|WAGE DETAILS|PAY DETAILS|PAY COMPONENTS?|GROSS EARNINGS)\s*$',
+    re.IGNORECASE
+)
+
+# Boundary that ends an earnings section
+EARNINGS_END = re.compile(
+    r'^(DEDUCTIONS?|TAX|SUPERANNUATION|SUPER\b|YTD|YEAR.TO.DATE|'
+    r'LEAVE|NET PAY|TOTAL|BANKING|NOTES?|BENEFITS?)',
+    re.IGNORECASE
+)
+
+# Generic salaried earnings line: "Description    $1,234.56"  (2+ spaces before amount)
+GENERIC_EARN = re.compile(
+    r'^(.{3,55}?)\s{2,}\$?([\d,]+\.\d{2})\s*$'
+)
+
+# Skip totals/subtotals inside a generic earnings section
+GENERIC_EARN_SKIP = re.compile(r'^(total|sub.?total|gross)', re.IGNORECASE)
 
 
 def _parse_shifts(lines: list) -> list:
     shifts = []
     in_dayforce_table = False
+    in_generic_earnings = False
 
     for line in lines:
         stripped = line.strip()
@@ -336,10 +389,16 @@ def _parse_shifts(lines: list) -> list:
         # Enter Dayforce earnings table
         if DAYFORCE_HDR.search(stripped):
             in_dayforce_table = True
+            in_generic_earnings = False
             continue
 
         if in_dayforce_table:
-            if re.match(r'^(TAX DEDUCT|TOTAL NET|BENEFIT|NOTES|Net Pay Distribution)', stripped, re.IGNORECASE):
+            if re.match(
+                r'^(TAX DEDUCT|TOTAL NET|BENEFIT|NOTES|Net Pay Distribution|'
+                r'YTD|Year.To.Date|SUPERANNUATION|Super\b|Leave Entitlement|'
+                r'Banking|Page\s+\d)',
+                stripped, re.IGNORECASE
+            ):
                 in_dayforce_table = False
                 continue
             if DAYFORCE_SKIP.match(stripped):
@@ -370,6 +429,32 @@ def _parse_shifts(lines: list) -> list:
                         rate=None,
                         amount=float(m.group(2).replace(',', '')),
                         type="allowance",
+                        label=label,
+                    ))
+            continue
+
+        # Generic salaried earnings section
+        if EARNINGS_HDR.match(stripped):
+            in_generic_earnings = True
+            continue
+
+        if in_generic_earnings:
+            if EARNINGS_END.match(stripped):
+                in_generic_earnings = False
+                continue
+            if GENERIC_EARN_SKIP.match(stripped):
+                continue
+            m = GENERIC_EARN.match(stripped)
+            if m:
+                label = m.group(1).strip()
+                amount = parse_number(m.group(2))
+                if amount is not None and amount > 0:
+                    shifts.append(ShiftEntry(
+                        date=None,
+                        hours=None,
+                        rate=None,
+                        amount=amount,
+                        type="penalty" if PENALTY_RE.search(label) else "normal",
                         label=label,
                     ))
 
